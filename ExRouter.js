@@ -37,13 +37,13 @@ export class ExRouteAdapter {
         this.props = props || {};
         this.renderScene = this.renderScene.bind(this);
         if (this.route.props.renderRightButton){
-            this.renderRightButton = this.route.props.renderRightButton.bind(this.route);
+            this.renderRightButton = this.route.props.renderRightButton.bind(this.route, this);
         }
         if (this.route.props.renderTitle){
-            this.renderTitle = this.route.props.renderTitle.bind(this.route);
+            this.renderTitle = this.route.props.renderTitle.bind(this.route, this);
         }
         if (this.route.props.renderLeftButton){
-            this.renderLeftButton = this.route.props.renderLeftButton.bind(this.route);
+            this.renderLeftButton = this.route.props.renderLeftButton.bind(this.route, this);
         }
     }
 
@@ -161,23 +161,6 @@ export class ExRouteAdapter {
     }
 }
 
-class ExNavigationBar extends Navigator.NavigationBar {
-    constructor(props){
-        super(props);
-        this.state = {};
-    }
-    render(){
-        const route = this.props.router.nextRoute || this.props.router.currentRoute;
-        if (route.props.hideNavBar === false){
-            return super.render();
-        }
-        if (this.props.router.props.hideNavBar || route.props.hideNavBar){
-            return null;
-        }
-        return super.render();
-    }
-}
-
 export default class ExRouter extends React.Component {
     router: BaseRouter;
 
@@ -280,8 +263,27 @@ export default class ExRouter extends React.Component {
         this.setState({modal: null});
     }
 
+    onRefresh(props:{ [key: string]: any}){
+        this.setState(props);
+    }
+
     onActionSheet(route: Route, props:{ [key: string]: any}){
         this.refs.actionsheet.showActionSheetWithOptions({...route.props, ...props}, props.callback);
+    }
+
+    _renderNavigationBar(props){
+        const navBar = this.props.renderNavigationBar ? this.props.renderNavigationBar(props) :
+            <Navigator.NavigationBar {...props}/>
+
+        const route = this.props.router.nextRoute || this.props.router.currentRoute;
+        if (route.props.hideNavBar === false){
+            return navBar;
+        }
+        if (this.props.router.props.hideNavBar || route.props.hideNavBar){
+            return null;
+        }
+        return navBar;
+
     }
 
     render() {
@@ -301,13 +303,13 @@ export default class ExRouter extends React.Component {
                     {header}
                     <ExNavigator ref="nav" initialRouteStack={router.stack.map(route => {
                             const oldProps = router.routes[route].props
-                            router.routes[route].props = {...oldProps, ...parentProps(this.props)}
+                            router.routes[route].props = {...oldProps, ...parentProps(this.props), ...this.state}
                             return new ExRouteAdapter(router.routes[route])
                         })}
                         style={styles.transparent}
                         sceneStyle={{ paddingTop: 0, backgroundColor:'transparent' }}
-                        renderNavigationBar={props=><ExNavigationBar {...props} router={router}/>}
                         {...this.props}
+                        renderNavigationBar={props=>this._renderNavigationBar({...props, ...this.state, router})}
                     />
                     {footer}
                     {this.state.modal}
