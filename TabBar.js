@@ -1,4 +1,4 @@
-import React from 'react-native'
+import React from 'react';
 const {View, InteractionManager} = React;
 import Tabs from 'react-native-tabs';
 
