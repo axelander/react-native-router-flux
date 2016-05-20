@@ -6,7 +6,7 @@ import ExNavigator from '@exponent/react-native-navigator';
 import ExNavigatorStyles from '@exponent/react-native-navigator/ExNavigatorStyles';
 import { BackIcon } from '@exponent/react-native-navigator/ExNavigatorIcons';
 import Animations from './Animations';
-import {TouchableOpacity, Navigator, StyleSheet, View, Text} from 'react-native';
+import {TouchableOpacity, Navigator, StyleSheet, View, Text,Platform} from 'react-native';
 import Router from './Router';
 import Actions from './Actions';
 import debug from './debug';
@@ -272,8 +272,22 @@ export default class ExRouter extends React.Component {
     }
 
     _renderNavigationBar(props){
-        const navBar = this.props.renderNavigationBar ? this.props.renderNavigationBar(props) :
-            <Navigator.NavigationBar {...props} navigationStyles={Navigator.NavigationBar.StylesIOS} />
+        let styles = Navigator.NavigationBar.StylesIOS;
+        if (Platform.OS === 'android') {
+          styles = Navigator.NavigationBar.StylesAndroid;
+
+          styles.Stages = JSON.parse(JSON.stringify(styles.Stages));
+
+          delete styles.Stages.Left.Title.marginLeft;
+          delete styles.Stages.Center.Title.marginLeft;
+          delete styles.Stages.Right.Title.marginLeft;
+
+          styles.Stages.Left.Title.alignItems = 'center';
+          styles.Stages.Center.Title.alignItems = 'center';
+          styles.Stages.Right.Title.alignItems = 'center';
+        }
+        const navigatorNode = (<Navigator.NavigationBar {...props} navigationStyles={styles} />)
+        const navBar = this.props.renderNavigationBar ? this.props.renderNavigationBar(props) : navigatorNode;
 
         const route = this.props.router.nextRoute || this.props.router.currentRoute;
         if (route.props.hideNavBar === false){
